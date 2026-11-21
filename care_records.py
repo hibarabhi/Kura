@@ -3,6 +3,20 @@ import streamlit as st
 from datetime import date, time
 from care_records import add_appointment
 
+def add_appointment(profile, title, date, time, location, doctor=""):
+    new_id = max((a["id"] for a in profile["appointments"]), default=0) + 1
+    appointment = {
+        "id": new_id,
+        "title": title,
+        "date": date,
+        "time": time,
+        "location": location,
+        "doctor": doctor,
+        "notes": "",
+    }
+    profile["appointments"].append(appointment)
+    return appointment
+
 
 def show_ride_request(appointment):
     with st.expander("Ask for a ride"):
