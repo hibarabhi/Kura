@@ -64,4 +64,45 @@ def show_update_appointment(appointment):
         with st.form(f'update_appointment_{appointment["id"]}'):
             new_date = st.date_input(
                 "New date",
-# Frontend 2 : page d'un rendez-vous
+                value=date.fromisoformat(appointment["date"]),
+            )
+            new_time = st.time_input(
+                "New time",
+                value=time.fromisoformat(appointment["time"]),
+            )
+            saved = st.form_submit_button("Save changes")
+
+        if saved:
+            appointment["date"] = new_date.isoformat()
+            appointment["time"] = new_time.strftime("%H:%M")
+            st.rerun()# Frontend 2 : page d'un rendez-vous
+
+def show_call_clinic(appointment):
+    with st.expander("📞 Call to cancel or reschedule"):
+        phone = appointment.get("phone", "514-555-0123")
+        st.write(f"Clinic phone: {phone}")
+        st.markdown(f"Tap to call")
+        st.write("What you can say:")
+        st.info(
+            f'"Hi, my name is __. I have an appointment on '
+            f'{appointment["date"]} at {appointment["time"]}. '
+            f'I need to reschedule. What other times are available?"'
+        )
+        st.caption("Once the clinic confirms, update the date below.")
+
+
+def show_appointment_card(appointment):
+    with st.container(border=True):
+        icon, info = st.columns([1, 5])
+        with icon:
+            st.markdown("## 🩺")
+        with info:
+            st.subheader(appointment["title"])
+            st.caption(appointment.get("doctor", "Your clinic"))
+            st.write(f'📅 {appointment["date"]}   🕒 {appointment["time"]}')
+            st.write(f'📍 {appointment["location"]}')
+
+        show_ride_request(appointment)
+        show_call_clinic(appointment)
+        show_update_appointment(appointment)
+        show_appointment_notes(appointment)
