@@ -10,7 +10,7 @@ from appointment_view import (
     show_add_appointment,
 )
 from caregiver import show_share_code, show_link_form
-# 👉 COLLE ICI la ligne "from calendar_view import ..." de l'étape 4
+from calendar_view import show_week_calendar
 
 st.set_page_config(page_title="Kura", page_icon="💙")
 load_css()
@@ -67,8 +67,8 @@ with home:
 with book:
     hero("Book Appointment", "Consult with trusted doctors anytime.")
     show_add_appointment(profile)
-    # 👉 COLLE ICI la ligne qui affiche le calendrier (étape 4)
-
+    upcoming = get_upcoming_appointments(profile["appointments"])
+    show_week_calendar(upcoming)
 # ================= MESSAGES =================
 with messages:
     st.subheader("Contact your clinic")
