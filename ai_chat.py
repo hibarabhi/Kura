@@ -1,4 +1,6 @@
 # ai_chat.py : chatbot avec une vraie IA gratuite (Gemini ou Groq), avec le chat à mots-clés en secours
+import time
+
 import requests
 import streamlit as st
 
@@ -7,6 +9,8 @@ from schedule import get_upcoming_appointments, get_todays_reminders
 
 DEBUG = True   # affiche pourquoi l'IA ne répond pas (mettre False pour la démo)
 GEMINI_MODEL = "gemini-3.8-flash"         # modèle Gemini (changeable dans secrets.toml)
+# modèles de secours si le premier est surchargé ou introuvable
+GEMINI_BACKUP_MODELS = ["gemini-3.8-flash-lite", "gemini-3.1-flash-lite", "gemini-3-flash"]
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 GROQ_MODEL = "llama-3.3-70b-versatile"
@@ -70,14 +74,13 @@ def _check(response, name):
         raise RuntimeError(f"{name} error {response.status_code}: {detail}")
 
 
-def _gemini_reply(api_key, system, history):
+def _gemini_reply(api_key, system, history, model):
     contents = [{"role": "model" if role == "assistant" else "user", "parts": [{"text": text}]}
                 for role, text in history if role in ("user", "assistant")][-12:]
     while contents and contents[0]["role"] != "user":   # Gemini veut commencer par l'utilisateur
         contents.pop(0)
     if not contents:
         return None
-    model = _secret("GEMINI_MODEL") or GEMINI_MODEL
     body = {
         "systemInstruction": {"parts": [{"text": system}]},
         "contents": contents,
@@ -113,16 +116,38 @@ def _groq_reply(api_key, system, history):
 
 
 def _ai_reply(history, profile):
-    """Renvoie (réponse, erreur). Gemini d'abord, sinon Groq."""
+    """Renvoie (réponse, erreur). Essaie plusieurs modèles Gemini, puis Groq."""
     system = SYSTEM_PROMPT + "\n\n" + _patient_context(profile)
-    try:
-        if _secret("GEMINI_API_KEY"):
-            return _gemini_reply(_secret("GEMINI_API_KEY"), system, history), None
-        if _secret("GROQ_API_KEY"):
-            return _groq_reply(_secret("GROQ_API_KEY"), system, history), None
+    errors = []
+
+    gemini_key = _secret("GEMINI_API_KEY")
+    if gemini_key:
+        models = [_secret("GEMINI_MODEL") or GEMINI_MODEL] + GEMINI_BACKUP_MODELS
+        for model in dict.fromkeys(models):           # sans doublons, dans l'ordre
+            for attempt in range(2):                  # 2 essais si le serveur est surchargé
+                try:
+                    reply = _gemini_reply(gemini_key, system, history, model)
+                    if reply:
+                        return reply, None
+                    break
+                except Exception as error:
+                    message = str(error)
+                    errors.append(f"{model}: {message[:90]}")
+                    if "503" in message and attempt == 0:
+                        time.sleep(1.5)               # surchargé : on réessaie une fois
+                        continue
+                    break                             # 404, 429... : modèle suivant
+
+    groq_key = _secret("GROQ_API_KEY")
+    if groq_key:
+        try:
+            return _groq_reply(groq_key, system, history), None
+        except Exception as error:
+            errors.append(f"groq: {str(error)[:90]}")
+
+    if not gemini_key and not groq_key:
         return None, "no API key found in .streamlit/secrets.toml"
-    except Exception as error:
-        return None, str(error)
+    return None, " | ".join(errors[-3:])
 
 
 def smart_reply(message, history, profile):
