@@ -37,7 +37,7 @@ def create_demo_profile(name):
     }
 
 
-def add_appointment(profile, title, appointment_date, appointment_time, location):
+def add_appointment(profile, title, appointment_date, appointment_time, location, doctor=''):
     appointments = profile["appointments"]
     next_id = max((appointment["id"] for appointment in appointments), default=0) + 1
 
@@ -46,7 +46,7 @@ def add_appointment(profile, title, appointment_date, appointment_time, location
         "title": title.strip(),
         "date": appointment_date,
         "time": appointment_time,
-
         "location": location.strip(),
+        "doctor": doctor.strip(),
         "notes": "",
     })
