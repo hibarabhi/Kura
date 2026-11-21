@@ -1,29 +1,23 @@
 # Frontend 2 : page d'un rendez-vous
 import streamlit as st
 from datetime import date, time
+from care_records import add_appointment
 
 
 def show_ride_request(appointment):
-    '''
-    Show a copyable ride request with only the appointment details selected.
-
-    The appointment dictionary provides the ID, date, time, and location.
-    If no details are selected, display a prompt to choose at least one.
-    '''
-    with st.expander("Ask for a ride"): # puts the indented widgets inside a section the patient can open and close
+    with st.expander("Ask for a ride"):
         details = st.multiselect(
             "Choose what to share",
             ["Date", "Time", "Location"],
             key=f'ride_details_{appointment["id"]}',
-        ) # Display 3 choices, and gives back a list of the selected choices
+        )
 
-        if not details: # if the patient selected nothing
+        if not details:
             st.caption("Select at least one detail to preview your message.")
-            return # exits the function
+            return
 
         lines = ["Hi! Could you give me a ride to an appointment?"]
 
-        # Adds to the list 'lines' the infos that the patient wants to share about his appointment
         if "Date" in details:
             lines.append(f'Date: {appointment["date"]}')
         if "Time" in details:
@@ -35,12 +29,7 @@ def show_ride_request(appointment):
 
 
 def show_appointment_notes(appointment):
-    '''
-    Lets the patient write or edit a note for one appointment.
-    Reads the old note to fill the text box, then saves the new one when the patient clicks Save notes.
-    '''
     with st.expander("Appointment notes"):
-        # Section containing a form that groups the text box and the save button
         with st.form(f'notes_form_{appointment["id"]}'):
             notes = st.text_area(
                 "What would you like to remember?",
@@ -54,11 +43,7 @@ def show_appointment_notes(appointment):
 
 
 def show_update_appointment(appointment):
-    '''
-    Lets the patient change the date and time in their tracker after the clinic confirms the new appointment
-    '''
     with st.expander("Update appointment"):
-      # An Update appointment section is created
         st.caption("Enter the new date and time confirmed by your clinic.")
 
         with st.form(f'update_appointment_{appointment["id"]}'):
@@ -75,34 +60,29 @@ def show_update_appointment(appointment):
         if saved:
             appointment["date"] = new_date.isoformat()
             appointment["time"] = new_time.strftime("%H:%M")
-            st.rerun()# Frontend 2 : page d'un rendez-vous
-
-def show_call_clinic(appointment):
-    with st.expander("📞 Call to cancel or reschedule"):
-        phone = appointment.get("phone", "514-555-0123")
-        st.write(f"Clinic phone: {phone}")
-        st.markdown(f"Tap to call")
-        st.write("What you can say:")
-        st.info(
-            f'"Hi, my name is __. I have an appointment on '
-            f'{appointment["date"]} at {appointment["time"]}. '
-            f'I need to reschedule. What other times are available?"'
-        )
-        st.caption("Once the clinic confirms, update the date below.")
+            st.rerun()
 
 
-def show_appointment_card(appointment):
-    with st.container(border=True):
-        icon, info = st.columns([1, 5])
-        with icon:
-            st.markdown("## 🩺")
-        with info:
-            st.subheader(appointment["title"])
-            st.caption(appointment.get("doctor", "Your clinic"))
-            st.write(f'📅 {appointment["date"]}   🕒 {appointment["time"]}')
-            st.write(f'📍 {appointment["location"]}')
+def show_add_appointment(profile):
+    with st.expander("Add appointment"):
+        with st.form("add_appointment"):
+            title = st.text_input("Appointment title")
+            appointment_date = st.date_input("Date", min_value=date.today())
+            appointment_time = st.time_input("Time", value=time(9, 0))
+            location = st.text_input("Location")
+            submitted = st.form_submit_button("Add appointment")
 
-        show_ride_request(appointment)
-        show_call_clinic(appointment)
-        show_update_appointment(appointment)
-        show_appointment_notes(appointment)
+        if submitted:
+            if not title.strip() or not location.strip():
+                st.warning("Enter a title and location.")
+                return
+
+            add_appointment(
+                profile,
+                title,
+                appointment_date.isoformat(),
+                appointment_time.strftime("%H:%M"),
+                location,
+            )
+            st.success("Appointment added.")
+            
