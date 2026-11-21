@@ -1,6 +1,9 @@
 # app.py  (Frontend 1)
 import streamlit as st
-from style import load_css, header, hero, appointment_card
+from style import (
+    load_css, login_screen, home_header,
+    section, tip_card, hero, appointment_card,
+)
 from care_records import create_demo_profile
 from schedule import get_todays_reminders, get_upcoming_appointments
 from appointment_view import (
@@ -16,94 +19,192 @@ from caregiver import (
     close_patient_code,
 )
 from calendar_view import show_week_calendar
+from clinic_chat import get_reply
 
 st.set_page_config(page_title="Kura", page_icon="💙")
 load_css()
+
 # ================= PAGE PROCHE AIDANT =================
 if "linked_code" in st.session_state:
     if show_caregiver_page():
         st.stop()
 
-# ================= ÉCRAN DE CONNEXION =================
+# ================= LOGIN =================
 if "profile" not in st.session_state:
-    st.markdown("<h1 style='text-align:center'>💙 Kura</h1>", unsafe_allow_html=True)
-    st.markdown(
-        "<p style='text-align:center;color:#64748B'>"
-        "Your appointments, medications and rides in one place.</p>",
-        unsafe_allow_html=True,
-    )
-    with st.form("demo_profile"):
-        name = st.text_input("First name or nickname")
-        submitted = st.form_submit_button("Get started")
-    if submitted:
-        if name.strip():
-            st.session_state["profile"] = create_demo_profile(name)
-            st.rerun()
-        else:
-            st.warning("Enter a name to get started.")
+    # Le formulaire HTML renvoie le nom dans l'adresse : ?user=Sam
+    user = st.query_params.get("user", "").strip()
+    if user:
+        st.query_params.clear()
+        st.session_state["profile"] = create_demo_profile(user.split("@")[0])
+        st.session_state["page"] = "home"
+        st.rerun()
 
-    with st.expander("I'm a caregiver"):
+    login_screen()
+    with st.expander("🤝  I'm a caregiver"):
         show_link_form()
     st.stop()
 
 profile = st.session_state["profile"]
 
-home, book, messages, me = st.tabs(["🏠 Home", "📅 Book", "💬 Messages", "👤 Profile"])
+# ================= NAVIGATION =================
+# La page affichée est gardée dans st.session_state["page"].
+# Chaque bouton (services, Book Now, barre du bas) change cette valeur.
+if "page" not in st.session_state:
+    st.session_state["page"] = "home"
+
+
+def go(target):
+    st.session_state["page"] = target
+
+
+def back_button():
+    with st.container(key="back"):
+        st.button("←  Back", key=f'back_{st.session_state["page"]}', on_click=go, args=("home",))
+
+
+# (icône, nom, page ouverte au clic)
+SERVICES = [
+    ("🚗", "Rides", "rides"),
+    ("💊", "Medication", "meds"),
+    ("🤝", "Caregiver", "profile"),
+    ("💬", "Messages", "chat"),
+]
+
+# (page, icône, nom) pour la barre du bas
+NAV = [
+    ("home", "🏠", "Home"),
+    ("book", "📅", "Book"),
+    ("chat", "💬", "Chat"),
+    ("profile", "👤", "Profile"),
+]
+
+page = st.session_state["page"]
 
 # ================= HOME =================
-with home:
-    header(profile["name"])
+if page == "home":
+    home_header(profile["name"])
+    search = st.text_input(
+        "Search",
+        placeholder="🔍  Search doctors or appointments...",
+        label_visibility="collapsed",
+        key="home_search",
+    )
 
-    st.subheader("Today")
+    with st.container(key="hero"):
+        st.markdown(
+            '<div class="kura-hero-title">Book Appointment</div>'
+            '<div class="kura-hero-text">Consult with trusted doctors anytime.</div>',
+            unsafe_allow_html=True,
+        )
+        st.button("Book Now  →", key="book_now", on_click=go, args=("book",))
+
+    section("Our services")
+    with st.container(key="services"):
+        cols = st.columns(4)
+        for col, (icon, label, target) in zip(cols, SERVICES):
+            with col:
+                st.button(f"{icon}\n\n{label}", key=f"svc_{label}", on_click=go, args=(target,))
+
+    section("Today")
     todays = get_todays_reminders(profile["reminders"])
     if not todays:
         st.caption("No reminders today.")
     for reminder in todays:
         reminder["taken"] = st.checkbox(
-            f'{reminder["time"]} — {reminder["title"]}',
+            f'💊  {reminder["time"]} — {reminder["title"]}',
             value=reminder["taken"],
             key=f'rem_{reminder["id"]}',
         )
 
-    st.subheader("Upcoming appointments")
+    section("Upcoming appointments")
+    query = search.strip().lower()
+    shown = 0
     for appointment in get_upcoming_appointments(profile["appointments"]):
+        text = f'{appointment["title"]} {appointment.get("doctor", "")}'.lower()
+        if query and query not in text:
+            continue
+        shown += 1
         appointment_card(appointment)
         show_ride_request(appointment)
         show_appointment_notes(appointment)
         show_update_appointment(appointment)
+    if shown == 0:
+        st.caption("No appointments found.")
+
+    tip_card()
+
+# ================= RIDES (service) =================
+elif page == "rides":
+    back_button()
+    hero("Ask for a ride", "Pick an appointment and choose what to share.")
+    upcoming = get_upcoming_appointments(profile["appointments"])
+    if not upcoming:
+        st.caption("No upcoming appointments.")
+    for appointment in upcoming:
+        appointment_card(appointment)
+        show_ride_request(appointment)
+
+# ================= MEDICATION (service) =================
+elif page == "meds":
+    back_button()
+    hero("Medication", "Tap a reminder once you've taken it.")
+    reminders = sorted(profile["reminders"], key=lambda r: (r["date"], r["time"]))
+    if not reminders:
+        st.caption("No reminders yet.")
+    for reminder in reminders:
+        reminder["taken"] = st.checkbox(
+            f'💊  {reminder["date"]} · {reminder["time"]} — {reminder["title"]}',
+            value=reminder["taken"],
+            key=f'rem_{reminder["id"]}',
+        )
+    st.caption("Questions about your dose? Ask your doctor or pharmacist.")
 
 # ================= BOOK =================
-with book:
-    hero("Book Appointment", "Consult with trusted doctors anytime.")
+elif page == "book":
+    hero("Book Appointment", "Pick a date, a time and a doctor.")
     show_add_appointment(profile)
     upcoming = get_upcoming_appointments(profile["appointments"])
     show_week_calendar(upcoming)
-# ================= MESSAGES =================
-with messages:
-    st.subheader("Contact your clinic")
+
+# ================= CHAT =================
+elif page == "chat":
+    section("Contact your clinic")
     if "chat" not in st.session_state:
         st.session_state.chat = [
             ("assistant", "Hi! This is Demo Health Clinic. How can we help?")
         ]
     for role, text in st.session_state.chat:
-        st.chat_message(role).write(text)
+        avatar = "🏥" if role == "assistant" else "🙂"
+        st.chat_message(role, avatar=avatar).write(text)
 
-    msg = st.chat_input("Type a message...")
+    with st.container():          # garde la zone de texte dans la page, pas collée en bas
+        msg = st.chat_input("Type a message...")
     if msg:
         st.session_state.chat.append(("user", msg))
-        st.session_state.chat.append((
-            "assistant",
-            "Thanks! Our team will reply soon. For an emergency, call 911.",
-        ))
+        st.session_state.chat.append(("assistant", get_reply(msg, profile)))
         st.rerun()
 
 # ================= PROFILE =================
-with me:
-    st.subheader("Profile")
+elif page == "profile":
+    section("Profile")
     st.write(f'Name: {profile["name"]}')
     show_share_code(profile)
     if st.button("Log out"):
         close_patient_code(st.session_state.get("patient_code"))
         st.session_state.pop("patient_code", None)
+        st.session_state["page"] = "home"
         del st.session_state["profile"]
         st.rerun()
+
+# ================= BARRE DU BAS =================
+with st.container(key="nav"):
+    cols = st.columns(4)
+    for col, (target, icon, label) in zip(cols, NAV):
+        with col:
+            st.button(
+                f"{icon}\n\n{label}",
+                key=f"nav_{target}",
+                on_click=go,
+                args=(target,),
+                type="primary" if page == target else "secondary",
+            )
