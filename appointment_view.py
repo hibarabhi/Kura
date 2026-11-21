@@ -63,26 +63,35 @@ def show_update_appointment(appointment):
             st.rerun()
 
 
+DOCTORS = [
+    "Dr. Martin — Family doctor",
+    "Dr. Benali — Cardiologist",
+    "Dr. Nguyen — Endocrinologist",
+]
+HOURS = ["09:00", "10:30", "13:00", "14:30", "16:00"]
+
+
 def show_add_appointment(profile):
-    with st.expander("Add appointment"):
-        with st.form("add_appointment"):
-            title = st.text_input("Appointment title")
-            appointment_date = st.date_input("Date", min_value=date.today())
-            appointment_time = st.time_input("Time", value=time(9, 0))
-            location = st.text_input("Location")
-            submitted = st.form_submit_button("Add appointment")
+    st.subheader("Choose a date")
+    day = st.date_input("Date", min_value=date.today(), key="book_date")
 
-        if submitted:
-            if not title.strip() or not location.strip():
-                st.warning("Enter a title and location.")
-                return
+    st.subheader("Available hours")
+    hour = st.pills("Time", HOURS, key="book_hour")
 
-            add_appointment(
-                profile,
-                title,
-                appointment_date.isoformat(),
-                appointment_time.strftime("%H:%M"),
-                location,
-            )
-            st.success("Appointment added.")
-            
+    st.subheader("Doctor")
+    doctor = st.radio("Doctor", DOCTORS, key="book_doctor")
+
+    if st.button("Book appointment", key="book_btn"):
+        if not hour:
+            st.warning("Pick a time first.")
+            return
+        name, specialty = doctor.split(" — ")
+        add_appointment(
+            profile,
+            f"{specialty} visit",
+            day.isoformat(),
+            hour,
+            "Demo Health Clinic",
+            name,
+        )
+        st.success(f"Booked with {name} on {day} at {hour} ✅")
