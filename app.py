@@ -19,7 +19,11 @@ from caregiver import (
     close_patient_code,
 )
 from calendar_view import show_week_calendar
-from ai_chat import get_ai_reply
+from clinic_chat import get_reply
+from meds import (
+    show_add_medication, show_medication_list,
+    show_prescriptions, show_prescription_list,
+)
 
 st.set_page_config(page_title="Kura", page_icon="💙")
 load_css()
@@ -147,16 +151,17 @@ elif page == "rides":
 # ================= MEDICATION (service) =================
 elif page == "meds":
     back_button()
-    hero("Medication", "Tap a reminder once you've taken it.")
-    reminders = sorted(profile["reminders"], key=lambda r: (r["date"], r["time"]))
-    if not reminders:
-        st.caption("No reminders yet.")
-    for reminder in reminders:
-        reminder["taken"] = st.checkbox(
-            f'💊  {reminder["date"]} · {reminder["time"]} — {reminder["title"]}',
-            value=reminder["taken"],
-            key=f'rem_{reminder["id"]}',
-        )
+    hero("Medication", "Add your medications and tick them once taken.", icon="💊")
+    show_add_medication(profile)
+    show_prescriptions(profile)
+    med_query = st.text_input(
+        "Search medications",
+        placeholder="🔍  Search your medications...",
+        label_visibility="collapsed",
+        key="med_search",
+    )
+    show_medication_list(profile, med_query.strip().lower(), section)
+    show_prescription_list(profile, med_query.strip().lower(), section)
     st.caption("Questions about your dose? Ask your doctor or pharmacist.")
 
 # ================= BOOK =================
@@ -166,26 +171,22 @@ elif page == "book":
     upcoming = get_upcoming_appointments(profile["appointments"])
     show_week_calendar(upcoming)
 
-# ================= CHAT (assistant IA) =================
+# ================= CHAT =================
 elif page == "chat":
-    section("Kura Assistant")
+    section("Contact your clinic")
     if "chat" not in st.session_state:
         st.session_state.chat = [
-            ("assistant",
-             "Hi! I'm Kura's assistant. I can help you use the app or answer "
-             "questions about your appointments and reminders.")
+            ("assistant", "Hi! This is Demo Health Clinic. How can we help?")
         ]
     for role, text in st.session_state.chat:
-        avatar = "💙" if role == "assistant" else "🙂"
+        avatar = "🏥" if role == "assistant" else "🙂"
         st.chat_message(role, avatar=avatar).write(text)
 
     with st.container():          # garde la zone de texte dans la page, pas collée en bas
         msg = st.chat_input("Type a message...")
     if msg:
         st.session_state.chat.append(("user", msg))
-        with st.spinner("Thinking..."):
-            reply = get_ai_reply(st.session_state.chat, profile)
-        st.session_state.chat.append(("assistant", reply))
+        st.session_state.chat.append(("assistant", get_reply(msg, profile)))
         st.rerun()
 
 # ================= PROFILE =================
