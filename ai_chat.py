@@ -1,123 +1,140 @@
-# ai_chat.py : assistant IA (Gemini, palier gratuit) avec plan B par mots-clés
-import os
-import re
-
+# ai_chat.py : chatbot avec une vraie IA gratuite (Gemini ou Groq), avec le chat à mots-clés en secours
+import requests
 import streamlit as st
 
-from clinic_chat import get_reply
-from schedule import get_todays_reminders, get_upcoming_appointments
+from clinic_chat import RULES, get_reply as keyword_reply
+from schedule import get_upcoming_appointments, get_todays_reminders
 
-try:
-    from google import genai
-    from google.genai import types
-except ImportError:  # library not installed: we use the keyword chat instead
-    genai = None
+DEBUG = True   # affiche pourquoi l'IA ne répond pas (mettre False pour la démo)
+GEMINI_MODEL = "gemini-3.8-flash"         # modèle Gemini (changeable dans secrets.toml)
+GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+GROQ_MODEL = "llama-3.3-70b-versatile"
 
-# Check the current free Flash model name in Google AI Studio: names change often
-MODEL = "gemini-2.5-flash"
+SYSTEM_PROMPT = """You are the friendly assistant of "Demo Health Clinic" inside the Kura app.
+Kura helps patients with appointments, medication reminders, rides to appointments and caregivers.
 
-EMERGENCY_WORDS = {
-    "emergency", "urgence", "urgent", "911",
-    "chest", "breathe", "poitrine", "respirer",
-}
-EMERGENCY_REPLY = "🚨 If this is an emergency, call 911 right now."
+What you can help with:
+- the patient's appointments (listed below), booking (Book tab), rescheduling (call the clinic, then use "Update appointment")
+- asking someone for a ride ("Ask for a ride" on an appointment)
+- medication reminders and prescriptions (Medication page)
+- linking a caregiver (Profile tab, share the KURA code)
+- clinic info: open Monday to Friday, 8:00 to 17:00, phone 514-555-0123
 
-APP_GUIDE = """You are Kura's assistant. Kura is a health-tracking app for older adults.
-You help the user use the app and answer questions about their own appointments and reminders.
-
-How the app works:
-- A bottom bar has four pages: Home, Book, Chat, Profile.
-- Home: a search bar, a "Book Now" button, four service buttons (Rides, Medication,
-  Caregiver, Messages), today's reminders (tick the box once the medication is taken),
-  and upcoming appointments. Under each appointment there are three sections:
-  "Ask for a ride" (builds a message to copy and send), "Appointment notes",
-  and "Update appointment" (change the date or time after the clinic confirms).
-- Book: choose a date, an available hour and a doctor, then press "Book appointment".
-  A week calendar shows the appointments.
-- Chat: this conversation.
-- Profile: shows a code to link a caregiver (family or friend), the list of linked people
-  with a Remove button, and a Log out button.
-- A caregiver does not need an account: on the first screen they open "I'm a caregiver"
-  and enter the patient's code and their own name. They see a dashboard with alerts for
-  missed medication and the upcoming appointments.
-- To cancel or reschedule with the clinic, the user calls 514-555-0123, then updates the
-  date in the app under "Update appointment".
-
-Rules:
-- Use short, simple sentences. Be warm and patient. Reply in the language the user writes in.
-- Guide step by step: say which page and which button to use.
-- You cannot change anything in the app yourself. Tell the user what to press.
-- You are an app assistant, not clinic staff and not a doctor.
-- Never give medical advice, diagnoses or medication doses. For medical questions say:
-  "Please ask your doctor or pharmacist." For a non-urgent health question you can mention
-  Info-Santé at 811.
-- If the user describes an emergency (chest pain, cannot breathe, a fall, etc.), tell them
-  to call 911 now.
-- If you are not sure about something, say so. Do not invent features, data or appointments.
+Strict rules:
+- Never diagnose, never suggest or change a medication or a dose, never give medical advice.
+- For health questions, tell them to ask their doctor or pharmacist, or call Info-Santé at 811 (Québec).
+- If anything sounds like an emergency, tell them to call 911 right away.
+- Keep answers short (2 to 4 sentences), warm and simple. Reply in the same language as the patient.
 """
 
 
-def get_client():
-    if genai is None:
-        return None
-    try:
-        key = st.secrets["GEMINI_API_KEY"]
-    except Exception:
-        key = os.environ.get("GEMINI_API_KEY")
-    if not key:
-        return None
-    return genai.Client(api_key=key)
-
-
-def build_system_prompt(profile):
-    lines = [APP_GUIDE, f'The user\'s first name is {profile["name"]}.',
-             "The user's current data (only use it to answer):"]
-    for r in get_todays_reminders(profile["reminders"]):
-        state = "taken" if r["taken"] else "not taken yet"
-        lines.append(f'- Reminder today: {r["title"]} at {r["time"]} ({state})')
-    for a in get_upcoming_appointments(profile["appointments"])[:3]:
-        doctor = a.get("doctor", "the clinic")
-        lines.append(
-            f'- Appointment: {a["title"]} with {doctor} on {a["date"]} '
-            f'at {a["time"]}, {a["location"]}'
-        )
+def _patient_context(profile):
+    lines = [f'Patient first name: {profile["name"]}']
+    appts = get_upcoming_appointments(profile["appointments"])
+    if appts:
+        lines.append("Upcoming appointments:")
+        for a in appts[:5]:
+            lines.append(f'- {a["title"]} with {a.get("doctor", "the clinic")} on {a["date"]} '
+                         f'at {a["time"]}, {a["location"]}')
+    else:
+        lines.append("No upcoming appointments.")
+    today = get_todays_reminders(profile["reminders"])
+    if today:
+        lines.append("Today's medication reminders:")
+        for r in today:
+            lines.append(f'- {r["time"]} {r["title"]} ({"taken" if r["taken"] else "not taken yet"})')
     return "\n".join(lines)
 
 
-def get_ai_reply(history, profile):
-    '''history is the list of (role, text) tuples of the chat, ending with the user's message.'''
-    last = history[-1][1]
+def _is_emergency(message):
+    # La 1re règle de clinic_chat est la règle "urgence" : on la vérifie AVANT l'IA
+    emergency_words, emergency_reply = RULES[0]
+    words = set(message.lower().replace("?", " ").replace("!", " ").replace(",", " ").split())
+    return emergency_reply if words & set(emergency_words) else None
 
-    # emergencies never go through the AI
-    words = set(re.findall(r"[a-zàâçéèêëîïôûùüÿ0-9']+", last.lower()))
-    if words & EMERGENCY_WORDS:
-        return EMERGENCY_REPLY
 
-    client = get_client()
-    if client is None:
-        return get_reply(last, profile)
-
-    contents = [
-        types.Content(
-            role="user" if role == "user" else "model",
-            parts=[types.Part(text=text)],
-        )
-        for role, text in history[-10:]  # only the last 10 messages
-    ]
-    # the conversation must start with a user message
-    while contents and contents[0].role == "model":
-        contents.pop(0)
-
+def _secret(name):
     try:
-        response = client.models.generate_content(
-            model=MODEL,
-            contents=contents,
-            config=types.GenerateContentConfig(
-                system_instruction=build_system_prompt(profile),
-                max_output_tokens=400,
-            ),
-        )
-        return response.text or get_reply(last, profile)
+        return st.secrets[name]
     except Exception:
-        # limit reached, no internet, etc.: fall back to the keyword chat
-        return get_reply(last, profile)
+        return None
+
+
+def _check(response, name):
+    if response.status_code != 200:
+        try:
+            detail = response.json().get("error", {}).get("message", "")
+        except Exception:
+            detail = response.text[:200]
+        raise RuntimeError(f"{name} error {response.status_code}: {detail}")
+
+
+def _gemini_reply(api_key, system, history):
+    contents = [{"role": "model" if role == "assistant" else "user", "parts": [{"text": text}]}
+                for role, text in history if role in ("user", "assistant")][-12:]
+    while contents and contents[0]["role"] != "user":   # Gemini veut commencer par l'utilisateur
+        contents.pop(0)
+    if not contents:
+        return None
+    model = _secret("GEMINI_MODEL") or GEMINI_MODEL
+    body = {
+        "systemInstruction": {"parts": [{"text": system}]},
+        "contents": contents,
+        # "thinkingLevel: low" = l'IA réfléchit moins longtemps -> réponse plus rapide
+        "generationConfig": {"maxOutputTokens": 1024, "temperature": 0.4,
+                             "thinkingConfig": {"thinkingLevel": "low"}},
+    }
+    response = requests.post(GEMINI_URL.format(model=model),
+                             headers={"x-goog-api-key": api_key}, json=body, timeout=60)
+    if response.status_code == 400 and "think" in response.text.lower():
+        # si ce modèle n'accepte pas ce réglage, on réessaie sans
+        body["generationConfig"].pop("thinkingConfig")
+        response = requests.post(GEMINI_URL.format(model=model),
+                                 headers={"x-goog-api-key": api_key}, json=body, timeout=60)
+    _check(response, "Gemini")
+    parts = response.json()["candidates"][0]["content"]["parts"]
+    text = "".join(p.get("text", "") for p in parts if not p.get("thought")).strip()
+    return text or None
+
+
+def _groq_reply(api_key, system, history):
+    messages = [{"role": "system", "content": system}]
+    messages += [{"role": role, "content": text}
+                 for role, text in history if role in ("user", "assistant")][-12:]
+    response = requests.post(
+        GROQ_URL,
+        headers={"Authorization": f"Bearer {api_key}"},
+        json={"model": GROQ_MODEL, "messages": messages, "max_tokens": 300, "temperature": 0.4},
+        timeout=20,
+    )
+    _check(response, "Groq")
+    return response.json()["choices"][0]["message"]["content"]
+
+
+def _ai_reply(history, profile):
+    """Renvoie (réponse, erreur). Gemini d'abord, sinon Groq."""
+    system = SYSTEM_PROMPT + "\n\n" + _patient_context(profile)
+    try:
+        if _secret("GEMINI_API_KEY"):
+            return _gemini_reply(_secret("GEMINI_API_KEY"), system, history), None
+        if _secret("GROQ_API_KEY"):
+            return _groq_reply(_secret("GROQ_API_KEY"), system, history), None
+        return None, "no API key found in .streamlit/secrets.toml"
+    except Exception as error:
+        return None, str(error)
+
+
+def smart_reply(message, history, profile):
+    """1) urgence -> 911 tout de suite  2) IA  3) mots-clés si l'IA ne répond pas."""
+    emergency = _is_emergency(message)
+    if emergency:
+        return emergency
+    with st.spinner("Typing..."):
+        reply, error = _ai_reply(history, profile)
+    if reply:
+        return reply
+    fallback = keyword_reply(message, profile)
+    if DEBUG and error:
+        fallback += f"\n\n⚠️ AI not used: {error}"
+    return fallback

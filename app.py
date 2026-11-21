@@ -19,7 +19,7 @@ from caregiver import (
     close_patient_code,
 )
 from calendar_view import show_week_calendar
-from clinic_chat import get_reply
+from ai_chat import smart_reply
 from meds import (
     show_add_medication, show_medication_list,
     show_prescriptions, show_prescription_list,
@@ -186,7 +186,8 @@ elif page == "chat":
         msg = st.chat_input("Type a message...")
     if msg:
         st.session_state.chat.append(("user", msg))
-        st.session_state.chat.append(("assistant", get_reply(msg, profile)))
+        reply = smart_reply(msg, st.session_state.chat, profile)
+        st.session_state.chat.append(("assistant", reply))
         st.rerun()
 
 # ================= PROFILE =================
