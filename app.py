@@ -9,7 +9,12 @@ from appointment_view import (
     show_update_appointment,
     show_add_appointment,
 )
-from caregiver import show_share_code, show_link_form
+from caregiver import (
+    show_share_code,
+    show_link_form,
+    show_caregiver_page,
+    close_patient_code,
+)
 from calendar_view import show_week_calendar
 
 st.set_page_config(page_title="Kura", page_icon="💙")
