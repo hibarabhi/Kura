@@ -2,10 +2,14 @@ import streamlit as st
 
 from care_records import create_demo_profile
 from appointment_view import show_ride_request, show_update_appointment
-from appointment_view import show_appointment_notes, show_ride_request
+from appointment_view import (
+    show_add_appointment,
+    show_appointment_notes,
+    show_ride_request,
+    show_update_appointment,
+)
 from schedule import get_todays_reminders, get_upcoming_appointments 
-
-
+from calendar_view import show_week_calendar
 
 
 st.title("Kura")
@@ -36,13 +40,19 @@ for reminder in get_todays_reminders(profile["reminders"]):
         key=f'rem_{reminder["id"]}',
     )
 
+
 st.header("Upcoming appointments")
-for appointment in get_upcoming_appointments(profile["appointments"]):
+show_add_appointment(profile)
+
+upcoming = get_upcoming_appointments(profile["appointments"])
+show_week_calendar(upcoming)
+
+for appointment in upcoming:
     st.write(
         f'**{appointment["title"]}** — {appointment["date"]} '
         f'at {appointment["time"]}, {appointment["location"]}'
     )
-    
     show_ride_request(appointment)
     show_appointment_notes(appointment)
     show_update_appointment(appointment)
+    
