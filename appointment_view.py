@@ -55,9 +55,10 @@ def show_appointment_notes(appointment):
 
 def show_update_appointment(appointment):
     '''
-    
+    Lets the patient change the date and time in their tracker after the clinic confirms the new appointment
     '''
     with st.expander("Update appointment"):
+      # An Update appointment section is created
         st.caption("Enter the new date and time confirmed by your clinic.")
 
         with st.form(f'update_appointment_{appointment["id"]}'):
