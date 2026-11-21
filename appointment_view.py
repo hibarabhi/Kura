@@ -64,15 +64,4 @@ def show_update_appointment(appointment):
         with st.form(f'update_appointment_{appointment["id"]}'):
             new_date = st.date_input(
                 "New date",
-                value=date.fromisoformat(appointment["date"]),
-            )
-            new_time = st.time_input(
-                "New time",
-                value=time.fromisoformat(appointment["time"]),
-            )
-            saved = st.form_submit_button("Save changes")
-
-        if saved:
-            appointment["date"] = new_date.isoformat()
-            appointment["time"] = new_time.strftime("%H:%M")
-            st.rerun()# Frontend 2 : page d'un rendez-vous
+# Frontend 2 : page d'un rendez-vous
