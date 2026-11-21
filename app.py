@@ -19,6 +19,10 @@ from calendar_view import show_week_calendar
 
 st.set_page_config(page_title="Kura", page_icon="💙")
 load_css()
+# ================= PAGE PROCHE AIDANT =================
+if "linked_code" in st.session_state:
+    if show_caregiver_page():
+        st.stop()
 
 # ================= ÉCRAN DE CONNEXION =================
 if "profile" not in st.session_state:
@@ -99,5 +103,7 @@ with me:
     st.write(f'Name: {profile["name"]}')
     show_share_code(profile)
     if st.button("Log out"):
+        close_patient_code(st.session_state.get("patient_code"))
+        st.session_state.pop("patient_code", None)
         del st.session_state["profile"]
         st.rerun()
