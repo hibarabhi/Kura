@@ -520,12 +520,12 @@ def book_banner():
     )
 
 
-def hero(title, text):
+def hero(title, text, icon="🗓️"):
     st.markdown(
         f'<div class="kura-hero"><div>'
         f'<div class="kura-hero-title">{title}</div>'
         f'<div class="kura-hero-text">{text}</div>'
-        f'</div><div class="kura-hero-icon">🗓️</div></div>',
+        f'</div><div class="kura-hero-icon">{icon}</div></div>',
         unsafe_allow_html=True,
     )
 
