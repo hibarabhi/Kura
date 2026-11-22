@@ -13,8 +13,10 @@ try:
 except ImportError:  # library not installed: we use the keyword chat instead
     genai = None
 
-# Check the current free Flash model name in Google AI Studio: names change often
-MODEL = "gemini-2.5-flash"
+# Google recommends the 3.x Flash models for new projects ("gemini-2.5-flash" is only served
+# to accounts that already used it). Flash-Lite is the lightest one. Model names change often:
+# to switch without touching the code, add GEMINI_MODEL = "..." to your secrets.
+DEFAULT_MODEL = "gemini-3.5-flash-lite"
 
 EMERGENCY_WORDS = {
     "emergency", "urgence", "urgent", "911",
@@ -59,14 +61,23 @@ Rules:
 
 def get_client():
     if genai is None:
+        print("[Kura AI] The 'google-genai' package is not installed: using the keyword chat.")
         return None
     try:
         key = st.secrets["GEMINI_API_KEY"]
     except Exception:
         key = os.environ.get("GEMINI_API_KEY")
     if not key:
+        print("[Kura AI] No GEMINI_API_KEY found (secrets or environment): using the keyword chat.")
         return None
     return genai.Client(api_key=key)
+
+
+def get_model():
+    try:
+        return st.secrets["GEMINI_MODEL"]
+    except Exception:
+        return os.environ.get("GEMINI_MODEL", DEFAULT_MODEL)
 
 
 def build_system_prompt(profile):
@@ -110,14 +121,16 @@ def get_ai_reply(history, profile):
 
     try:
         response = client.models.generate_content(
-            model=MODEL,
+            model=get_model(),
             contents=contents,
             config=types.GenerateContentConfig(
                 system_instruction=build_system_prompt(profile),
-                max_output_tokens=400,
+                max_output_tokens=1024,  # room left for the model's internal thinking
             ),
         )
         return response.text or get_reply(last, profile)
-    except Exception:
-        # limit reached, no internet, etc.: fall back to the keyword chat
+    except Exception as error:
+        # limit reached, wrong model name, no internet, etc.: fall back to the keyword chat.
+        # The reason is printed in the server logs so the failure is not silent.
+        print(f"[Kura AI] Gemini call failed ({type(error).__name__}): {error}")
         return get_reply(last, profile)

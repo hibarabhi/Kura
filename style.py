@@ -199,12 +199,37 @@ header[data-testid="stHeader"] { background: transparent; }
 .st-key-services [data-testid="stColumn"],
 .st-key-nav [data-testid="stColumn"] { min-width: 0 !important; width: auto !important; flex: 1 1 0 !important; }
 
+/* services : icône seule ; au survol / appui -> pilule bleue avec le nom (comme la barre du bas) */
+.st-key-services [data-testid="stColumn"] { transition: flex .25s ease; }
+.st-key-services [data-testid="stColumn"]:has(button:hover),
+.st-key-services [data-testid="stColumn"]:has(button:active) { flex: 2.2 1 0 !important; }
+.st-key-services [data-testid="stColumn"] > *,
+.st-key-services [data-testid="stVerticalBlock"],
+.st-key-services [data-testid="stElementContainer"],
+.st-key-services [data-testid="stButton"],
+.st-key-services .stButton,
+.st-key-services .stButton > *,
+.st-key-services .stButton button { width: 100% !important; max-width: none !important; }
 .st-key-services .stButton button {
-    background: white !important; border-radius: 18px !important; padding: 12px 4px !important;
-    box-shadow: 0 4px 14px rgba(15, 23, 42, .06) !important; transition: transform .15s; }
-.st-key-services .stButton button:hover { background: #EAF1FF !important; transform: translateY(-2px); }
-.st-key-services .stButton button p { color: #0F172A !important; font-size: .75rem; line-height: 1.3; margin: 0; }
-.st-key-services .stButton button p:first-child { font-size: 1.4rem; }
+    height: 58px; min-width: 0; padding: 0 10px !important; border-radius: 16px !important;
+    background: #FFFFFF !important; box-shadow: 0 4px 14px rgba(15, 23, 42, .06) !important;
+    transition: background .2s ease, box-shadow .2s ease; }
+.st-key-services .stButton button div { gap: 0 !important; }
+.st-key-services .stButton button [data-testid="stIconMaterial"] {
+    margin: 0 !important; color: #2563EB; font-size: 1.6rem; transition: color .2s ease; }
+.st-key-services .stButton button [data-testid="stMarkdownContainer"] {
+    max-width: 0; opacity: 0; overflow: hidden; margin: 0;
+    transition: max-width .25s ease, opacity .2s ease, margin .25s ease; }
+.st-key-services .stButton button p {
+    color: #FFFFFF !important; font-size: .82rem; font-weight: 600; margin: 0; white-space: nowrap; }
+.st-key-services .stButton button:hover,
+.st-key-services .stButton button:active {
+    background: #2563EB !important; box-shadow: 0 8px 18px rgba(37, 99, 235, .35) !important; }
+.st-key-services .stButton button:hover [data-testid="stIconMaterial"],
+.st-key-services .stButton button:active [data-testid="stIconMaterial"] { color: #FFFFFF; }
+.st-key-services .stButton button:hover [data-testid="stMarkdownContainer"],
+.st-key-services .stButton button:active [data-testid="stMarkdownContainer"] {
+    max-width: 110px; opacity: 1; margin-left: 6px; }
 
 .st-key-hero { position: relative; background: linear-gradient(135deg, #3B82F6, #1D4ED8);
                border-radius: 24px; padding: 20px 22px; margin: 8px 0 6px;
@@ -224,15 +249,25 @@ header[data-testid="stHeader"] { background: transparent; }
 .st-key-back .stButton button p { color: #0F172A !important; }
 
 .st-key-nav { position: fixed; bottom: 34px; left: 50%; transform: translateX(-50%);
-              width: 372px; max-width: calc(100% - 24px); z-index: 999; padding: 6px;
-              border-radius: 24px; background: rgba(255, 255, 255, .92); backdrop-filter: blur(10px);
+              width: 372px; max-width: calc(100% - 24px); z-index: 999; padding: 8px 10px;
+              border-radius: 28px; background: #FFFFFF;
               box-shadow: 0 10px 30px rgba(15, 23, 42, .15); }
+.st-key-nav [data-testid="stHorizontalBlock"] { align-items: center; }
+.st-key-nav [data-testid="stColumn"] { flex: 1 1 0 !important; transition: flex .25s ease; }
+/* la colonne de l'onglet actif est plus large, pour la pilule icône + texte */
+.st-key-nav [data-testid="stColumn"]:has([data-testid="stBaseButton-primary"]) { flex: 2.3 1 0 !important; }
 .st-key-nav .stButton button { background: transparent !important; box-shadow: none !important;
-                               padding: 6px 2px !important; border-radius: 16px !important; }
-.st-key-nav .stButton button p { color: #64748B !important; font-size: .72rem; line-height: 1.2; margin: 0; }
-.st-key-nav .stButton button p:first-child { font-size: 1.15rem; }
-.st-key-nav .stButton [data-testid="stBaseButton-primary"] { background: #EAF1FF !important; }
-.st-key-nav .stButton [data-testid="stBaseButton-primary"] p { color: #2563EB !important; font-weight: 700; }
+                               min-height: 44px; padding: 8px 0 !important; border-radius: 999px !important; }
+.st-key-nav .stButton button [data-testid="stIconMaterial"] { color: #475569; font-size: 1.45rem; }
+.st-key-nav .stButton button p { font-size: .85rem; font-weight: 600; margin: 0; }
+/* onglets inactifs : seulement l'icône */
+.st-key-nav [data-testid="stBaseButton-secondary"] [data-testid="stMarkdownContainer"] { display: none; }
+/* onglet actif : pilule bleue avec icône + texte en blanc */
+.st-key-nav .stButton [data-testid="stBaseButton-primary"] {
+    background: #2563EB !important; padding: 8px 14px !important;
+    box-shadow: 0 6px 14px rgba(37, 99, 235, .35) !important; }
+.st-key-nav [data-testid="stBaseButton-primary"] [data-testid="stIconMaterial"],
+.st-key-nav [data-testid="stBaseButton-primary"] p { color: #FFFFFF !important; }
 
 /* ---------- proche aidant ---------- */
 .kura-patient { display: flex; align-items: center; gap: 14px; border-radius: 22px; padding: 18px 20px;
