@@ -96,7 +96,7 @@ Kura/
 
 | Name | Role |
 |---|---|
-| [Name] | Frontend: main app, design, AI assistant |
+| [Arwa Azriga] | Frontend: main app, design, AI assistant |
 | [Name] | Frontend: appointment views, booking |
 | [Name] | Backend: scheduling, caregiver link |
 | [Name] | Backend: patient data, calendar |
