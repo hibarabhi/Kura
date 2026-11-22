@@ -17,6 +17,8 @@ import streamlit.components.v1 as components
 from clinic_chat import RULES, get_reply as keyword_reply
 from schedule import get_todays_reminders, get_upcoming_appointments
 
+DEBUG = True   # affiche la raison des erreurs (mettre False pour la démo)
+GROQ_STT_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 GEMINI_MODELS = ["gemini-3.8-flash", "gemini-3.8-flash-lite", "gemini-3.1-flash-lite", "gemini-3-flash"]
 
@@ -133,28 +135,58 @@ def ask_text(question, history, profile):
     try:
         contents = _history_contents(history + [("user", question)])
         return _call_gemini(contents, SYSTEM_PROMPT + "\n\n" + _patient_context(profile))
-    except Exception:
-        return keyword_reply(question, profile)
+    except Exception as error:
+        reply = keyword_reply(question, profile)
+        return reply + (f" (⚠️ AI not used: {error})" if DEBUG else "")
+
+
+def _groq_transcribe(audio_bytes):
+    """Plan B gratuit : Groq (Whisper) transforme la voix en texte."""
+    key = _secret("GROQ_API_KEY")
+    if not key:
+        raise RuntimeError("no GROQ_API_KEY for the voice backup")
+    r = requests.post(GROQ_STT_URL, headers={"Authorization": f"Bearer {key}"},
+                      files={"file": ("voice.wav", audio_bytes, "audio/wav")},
+                      data={"model": "whisper-large-v3-turbo"}, timeout=60)
+    if r.status_code != 200:
+        raise RuntimeError(f"groq voice error {r.status_code}")
+    return r.json().get("text", "").strip()
 
 
 def ask_audio(audio_bytes, history, profile):
     """Renvoie (ce que l'IA a entendu, réponse)."""
+    if len(audio_bytes) < 2000:
+        return None, "I didn't hear anything. Tap the mic, speak, then tap it again to stop."
+
     audio_part = {"inline_data": {"mime_type": "audio/wav",
                                   "data": base64.b64encode(audio_bytes).decode()}}
     contents = _history_contents(history) + [
         {"role": "user", "parts": [audio_part, {"text": AUDIO_INSTRUCTION}]}]
+
+    # 1) Gemini écoute et répond directement
     try:
         text = _call_gemini(contents, SYSTEM_PROMPT + "\n\n" + _patient_context(profile))
-    except Exception:
-        return None, "Sorry, I couldn't process your voice right now. You can type your question below."
+        heard, reply = None, text
+        if "REPLY:" in text:
+            before, reply = text.split("REPLY:", 1)
+            heard = before.replace("HEARD:", "").strip() or None
+            reply = reply.strip()
+        return heard, (_emergency(heard or "") or reply)
+    except Exception as gemini_error:
+        error = str(gemini_error)
 
-    heard, reply = None, text
-    if "REPLY:" in text:
-        before, reply = text.split("REPLY:", 1)
-        heard = before.replace("HEARD:", "").strip() or None
-        reply = reply.strip()
-    urgent = _emergency(heard or "")
-    return heard, (urgent or reply)
+    # 2) Plan B : Groq transcrit la voix, puis on répond comme à un message écrit
+    try:
+        heard = _groq_transcribe(audio_bytes)
+        if heard:
+            return heard, ask_text(heard, history, profile)
+    except Exception as groq_error:
+        error += f" | {groq_error}"
+
+    message = "Sorry, I couldn't process your voice right now. You can type your question below."
+    if DEBUG:
+        message += f" (⚠️ {error})"
+    return None, message
 
 
 # ---------------------------------------------------------------- interface
