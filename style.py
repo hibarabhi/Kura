@@ -7,7 +7,7 @@ import streamlit as st
 
 CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@500;600;700&display=swap');
 .stApp :is(p, h1, h2, h3, h4, label, input, textarea, button, li, b, small) {
     font-family: 'Plus Jakarta Sans', sans-serif;
 }
@@ -132,14 +132,19 @@ header[data-testid="stHeader"] { background: transparent; }
              box-shadow: 0 4px 12px rgba(15, 23, 42, .08); }
 .kura-dot { position: absolute; top: 9px; right: 10px; width: 8px; height: 8px;
             border-radius: 50%; background: #EF4444; }
-.kura-hello { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-.kura-doc { width: 96px; height: 96px; flex-shrink: 0; border-radius: 50%; font-size: 54px;
-            display: flex; align-items: center; justify-content: center;
-            background: radial-gradient(circle, #DBEAFE 0%, #BFDBFE 100%); }
-.kura-greeting { color: #64748B; font-size: 1rem; margin: 0; }
-.kura-title { font-size: 2rem; font-weight: 800; line-height: 1.15; color: #0F172A; margin: 2px 0 16px; }
-.kura-title span { color: #2563EB; }
-
+.kura-hello { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px; margin-top: 4px; }
+.kura-greeting { color: #64748B !important; font-size: .95rem !important; font-weight: 500; margin: 0 0 4px; }
+.kura-title { font-family: 'Poppins', sans-serif !important; font-size: 2.35rem !important;
+              font-weight: 600 !important; line-height: 1.12 !important; letter-spacing: -.02em;
+              color: #0F172A; margin: 0 0 18px; }
+.kura-title span { color: #2563EB; font-family: 'Poppins', sans-serif !important; }
+.kura-doc { position: relative; flex-shrink: 0; width: 118px; height: 118px; margin-bottom: 14px;
+            border-radius: 50%; background: radial-gradient(circle at 50% 40%, #DBEAFE 0%, #BFDBFE 70%, #93C5FD 100%); }
+.kura-doc-img { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+                height: 138px; max-width: none; object-fit: contain;
+                filter: drop-shadow(0 8px 14px rgba(29, 78, 216, .25)); }
+.kura-doc-emoji { position: absolute; inset: 0; display: flex; align-items: center;
+                  justify-content: center; font-size: 60px; }
 .kura-hero { display: flex; justify-content: space-between; align-items: center;
              background: linear-gradient(135deg, #3B82F6, #1D4ED8); border-radius: 24px;
              padding: 20px 22px; margin: 8px 0 18px; box-shadow: 0 12px 28px rgba(37, 99, 235, .3); }
@@ -655,14 +660,27 @@ def divider(text):
 
 
 # ---------- accueil ----------
+def _asset_img(filename, css_class, alt):
+    """Renvoie une balise <img> si assets/<filename> existe, sinon None."""
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", filename)
+    if not os.path.exists(path):
+        return None
+    mime = "image/png" if filename.lower().endswith(".png") else "image/jpeg"
+    with open(path, "rb") as f:
+        b64 = base64.b64encode(f.read()).decode()
+    return f'<img class="{css_class}" src="data:{mime};base64,{b64}" alt="{alt}">'
+
+
 def home_header(name):
-    initial = html.escape(name.strip()[:1].upper())
     name = html.escape(name)
+    doctor = (_asset_img("doctor.png", "kura-doc-img", "Doctor")
+              or _asset_img("doctor.jpg", "kura-doc-img", "Doctor")
+              or '<span class="kura-doc-emoji">👩‍⚕️</span>')
     st.markdown(
         f'<div class="kura-hello"><div>'
-        f'<p class="kura-greeting">{_greeting()}, {name} 👋</p>'
-        f'<p class="kura-title">Take care of<br>your <span>health.</span></p>'
-        f'</div><div class="kura-doc">👩‍⚕️</div></div>',
+        f'<div class="kura-greeting">{_greeting()}, {name}</div>'
+        f'<div class="kura-title">Take care of<br>your <span>health.</span></div>'
+        f'</div><div class="kura-doc">{doctor}</div></div>',
         unsafe_allow_html=True,
     )
 
