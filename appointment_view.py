@@ -1,10 +1,15 @@
-# Frontend 2 : page d'un rendez-vous
+# Display Kura's appointment booking and management tools
+
 import streamlit as st
 from datetime import date, time
 from care_records import add_appointment
 
 
 def show_ride_request(appointment):
+    '''
+    Display a copyable ride request using the details the patient selects.
+    The appointment dictionary contains the ID, date, time, and location.
+    '''
     with st.expander("Ask for a ride"):
         details = st.multiselect(
             "Choose what to share",
@@ -29,6 +34,7 @@ def show_ride_request(appointment):
 
 
 def show_appointment_notes(appointment):
+    ''' Let the patient edit notes stored in the appointment dictionary '''
     with st.expander("Appointment notes"):
         with st.form(f'notes_form_{appointment["id"]}'):
             notes = st.text_area(
@@ -37,16 +43,19 @@ def show_appointment_notes(appointment):
             )
             saved = st.form_submit_button("Save notes")
 
+        # Update the appointment only after the patient submits the form
         if saved:
             appointment["notes"] = notes
             st.success("Notes saved for this session.")
 
 
 def show_update_appointment(appointment):
+    """Save a clinic-confirmed date and time to the appointment dictionary."""
     with st.expander("Update appointment"):
         st.caption("Enter the new date and time confirmed by your clinic.")
 
         with st.form(f'update_appointment_{appointment["id"]}'):
+            # Convert the stored strings to date and time objects for the widgets
             new_date = st.date_input(
                 "New date",
                 value=date.fromisoformat(appointment["date"]),
@@ -60,9 +69,11 @@ def show_update_appointment(appointment):
         if saved:
             appointment["date"] = new_date.isoformat()
             appointment["time"] = new_time.strftime("%H:%M")
+
+            # Refresh the appointment card with the updated details
             st.rerun()
 
-
+# Fixed doctor and time options for the booking demo.
 DOCTORS = [
     "Dr. Martin — Family doctor",
     "Dr. Benali — Cardiologist",
@@ -72,6 +83,7 @@ HOURS = ["09:00", "10:30", "13:00", "14:30", "16:00"]
 
 
 def show_add_appointment(profile):
+    '''Display the booking controls'''
     st.subheader("Choose a date")
     day = st.date_input("Date", min_value=date.today(), key="book_date")
 
@@ -85,6 +97,8 @@ def show_add_appointment(profile):
         if not hour:
             st.warning("Pick a time first.")
             return
+
+         # Separate the doctor's name from the specialty used in the visit title.
         name, specialty = doctor.split(" — ")
         add_appointment(
             profile,
