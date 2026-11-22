@@ -21,13 +21,6 @@ from caregiver import (
 from calendar_view import show_week_calendar
 from clinic_chat import get_reply
 from voice_assistant import show_voice_assistant, reset_voice_assistant
-
-# Chat : on utilise smart_reply (IA) s'il existe dans ai_chat.py, sinon les mots-clés
-try:
-    from ai_chat import smart_reply
-except ImportError:
-    def smart_reply(message, history, profile):
-        return get_reply(message, profile)
 from meds import (
     show_add_medication, show_medication_list,
     show_prescriptions, show_prescription_list,
@@ -76,19 +69,18 @@ def back_button():
 
 # (icône, nom, page ouverte au clic)
 SERVICES = [
-    (":material/directions_car:", "Rides", "rides"),
-    (":material/medication:", "Meds", "meds"),
-    (":material/diversity_1:", "Caregiver", "profile"),
-    (":material/chat:", "Chat", "chat"),
+    ("🚗", "Rides", "rides"),
+    ("💊", "Medication", "meds"),
+    ("🤝", "Caregiver", "profile"),
+    ("💬", "Messages", "chat"),
 ]
 
 # (page, icône, nom) pour la barre du bas
 NAV = [
-    ("home", ":material/home:", "Home"),
-    ("book", ":material/stethoscope:", "Book"),
-    ("meds", ":material/medication:", "Meds"),
-    ("chat", ":material/chat:", "Chat"),
-    ("profile", ":material/person:", "Profile"),
+    ("home", "🏠", "Home"),
+    ("book", "📅", "Book"),
+    ("chat", "💬", "Chat"),
+    ("profile", "👤", "Profile"),
 ]
 
 page = st.session_state["page"]
@@ -116,7 +108,7 @@ if page == "home":
         cols = st.columns(4)
         for col, (icon, label, target) in zip(cols, SERVICES):
             with col:
-                st.button(label, icon=icon, key=f"svc_{label}", on_click=go, args=(target,))
+                st.button(f"{icon}\n\n{label}", key=f"svc_{label}", on_click=go, args=(target,))
 
     section("Today")
     todays = get_todays_reminders(profile["reminders"])
@@ -195,8 +187,7 @@ elif page == "chat":
         msg = st.chat_input("Type a message...")
     if msg:
         st.session_state.chat.append(("user", msg))
-        reply = smart_reply(msg, st.session_state.chat, profile)
-        st.session_state.chat.append(("assistant", reply))
+        st.session_state.chat.append(("assistant", get_reply(msg, profile)))
         st.rerun()
 
 # ================= PROFILE =================
@@ -214,12 +205,11 @@ elif page == "profile":
 
 # ================= BARRE DU BAS =================
 with st.container(key="nav"):
-    cols = st.columns(len(NAV))
+    cols = st.columns(4)
     for col, (target, icon, label) in zip(cols, NAV):
         with col:
             st.button(
-                label,
-                icon=icon,
+                f"{icon}\n\n{label}",
                 key=f"nav_{target}",
                 on_click=go,
                 args=(target,),
@@ -228,3 +218,4 @@ with st.container(key="nav"):
 
 # ================= ASSISTANT IA (bouton flottant + voix) =================
 show_voice_assistant(profile)
+
