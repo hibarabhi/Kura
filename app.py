@@ -68,18 +68,19 @@ def back_button():
 
 # (icône, nom, page ouverte au clic)
 SERVICES = [
-    ("🚗", "Rides", "rides"),
-    ("💊", "Medication", "meds"),
-    ("🤝", "Caregiver", "profile"),
-    ("💬", "Messages", "chat"),
+    (":material/directions_car:", "Rides", "rides"),
+    (":material/medication:", "Meds", "meds"),
+    (":material/diversity_1:", "Caregiver", "profile"),
+    (":material/chat:", "Chat", "chat"),
 ]
 
 # (page, icône, nom) pour la barre du bas
 NAV = [
-    ("home", "🏠", "Home"),
-    ("book", "📅", "Book"),
-    ("chat", "💬", "Chat"),
-    ("profile", "👤", "Profile"),
+    ("home", ":material/home:", "Home"),
+    ("book", ":material/stethoscope:", "Book"),
+    ("meds", ":material/medication:", "Meds"),
+    ("chat", ":material/chat:", "Chat"),
+    ("profile", ":material/person:", "Profile"),
 ]
 
 page = st.session_state["page"]
@@ -107,7 +108,7 @@ if page == "home":
         cols = st.columns(4)
         for col, (icon, label, target) in zip(cols, SERVICES):
             with col:
-                st.button(f"{icon}\n\n{label}", key=f"svc_{label}", on_click=go, args=(target,))
+                st.button(label, icon=icon, key=f"svc_{label}", on_click=go, args=(target,))
 
     section("Today")
     todays = get_todays_reminders(profile["reminders"])
@@ -204,11 +205,12 @@ elif page == "profile":
 
 # ================= BARRE DU BAS =================
 with st.container(key="nav"):
-    cols = st.columns(4)
+    cols = st.columns(len(NAV))
     for col, (target, icon, label) in zip(cols, NAV):
         with col:
             st.button(
-                f"{icon}\n\n{label}",
+                label,
+                icon=icon,
                 key=f"nav_{target}",
                 on_click=go,
                 args=(target,),
