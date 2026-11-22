@@ -315,6 +315,11 @@ header[data-testid="stHeader"] { background: transparent; }
            display: flex; align-items: center; justify-content: center; z-index: 2;
            background: rgba(255, 255, 255, .6);
            box-shadow: inset 0 1px 0 #fff, 0 10px 22px rgba(37, 99, 235, .12); }
+.kl-brand { position: absolute; top: 12px; left: 8px; z-index: 2;
+            font-family: 'Poppins', sans-serif !important; font-size: 1.7rem; font-weight: 700;
+            letter-spacing: -.02em; line-height: 1;
+            background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+            -webkit-background-clip: text; background-clip: text; color: transparent; }
 .kl-logo { position: relative; z-index: 1; width: 160px; height: 160px; margin: 46px auto 28px;
            border-radius: 46px; display: flex; align-items: center; justify-content: center;
            background: linear-gradient(145deg, rgba(255, 255, 255, .85), rgba(226, 235, 255, .55));
@@ -629,6 +634,7 @@ def login_screen(dark=False):
         '<div class="kl-blob kl-b3"></div><div class="kl-blob kl-b4"></div>'
         + (f'<a class="kl-moon" href="?theme=light" target="_self" title="Light mode">{_SUN_SVG}</a>' if dark
            else f'<a class="kl-moon" href="?theme=dark" target="_self" title="Dark mode">{_MOON_SVG}</a>') +
+        '<div class="kl-brand">Kura</div>'
         f'<div class="kl-logo">{_logo_html()}</div>'
         '<div class="kl-title">Welcome Back</div>'
         '<div class="kl-sub">Sign in to continue</div>'
@@ -649,7 +655,7 @@ def login_screen(dark=False):
         '<button type="button" class="kl-a" title="Demo only">🍎</button>'
         '<button type="button" class="kl-f" title="Demo only">f</button>'
         '</div>'
-        '<div class="kl-tagline">CARE &nbsp;•&nbsp; CONNECT &nbsp;•&nbsp; GROW TOGETHER</div>'
+        '<div class="kl-tagline">CARE &nbsp;•&nbsp; CURE &nbsp;•&nbsp; CONNECT</div>'
         '</div>',
         unsafe_allow_html=True,
     )
