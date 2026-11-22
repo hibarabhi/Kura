@@ -4,7 +4,7 @@
 
 Built in 30 hours at **[Hackathon name]** by a team of four.
 
-🔗 **Live demo:** [your-app.streamlit.app](https://your-app.streamlit.app)
+🔗 **Live demo:** [your-app.streamlit.app](https://kura-health.streamlit.app/)
 
 ---
 
@@ -57,8 +57,6 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-The app opens at http://localhost:8501.
-
 ### Optional: enable the AI assistant
 
 1. Get a free API key at [aistudio.google.com](https://aistudio.google.com).
@@ -96,10 +94,10 @@ Kura/
 
 | Name | Role |
 |---|---|
-| [Arwa Azriga] | Frontend: main app, design, AI assistant |
-| [Name] | Frontend: appointment views, booking |
-| [Name] | Backend: scheduling, caregiver link |
-| [Name] | Backend: patient data, calendar |
+| [Arwa] | Frontend: main app, design |
+| [Hiba] | Frontend: appointment views, booking |
+| [Ikram] | Backend: scheduling, caregiver link, chatbot |
+| [Farah] | Backend: patient data, calendar |
 
 ## What's next
 
