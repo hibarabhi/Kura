@@ -19,7 +19,15 @@ from caregiver import (
     close_patient_code,
 )
 from calendar_view import show_week_calendar
-from ai_chat import smart_reply
+from clinic_chat import get_reply
+from voice_assistant import show_voice_assistant, reset_voice_assistant
+
+# Chat : on utilise smart_reply (IA) s'il existe dans ai_chat.py, sinon les mots-clés
+try:
+    from ai_chat import smart_reply
+except ImportError:
+    def smart_reply(message, history, profile):
+        return get_reply(message, profile)
 from meds import (
     show_add_medication, show_medication_list,
     show_prescriptions, show_prescription_list,
@@ -199,6 +207,7 @@ elif page == "profile":
     if st.button("Log out"):
         close_patient_code(st.session_state.get("patient_code"))
         st.session_state.pop("patient_code", None)
+        reset_voice_assistant()
         st.session_state["page"] = "home"
         del st.session_state["profile"]
         st.rerun()
@@ -216,3 +225,6 @@ with st.container(key="nav"):
                 args=(target,),
                 type="primary" if page == target else "secondary",
             )
+
+# ================= ASSISTANT IA (bouton flottant + voix) =================
+show_voice_assistant(profile)
