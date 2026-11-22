@@ -306,7 +306,7 @@ header[data-testid="stHeader"] { background: transparent; }
          background: radial-gradient(circle at 30% 30%, #F1F5FF 0%, #DCE5FB 100%);
          box-shadow: -14px -10px 0 rgba(255, 255, 255, .9), -20px -16px 0 rgba(110, 150, 255, .25); }
 
-.kl-moon { position: absolute; top: 4px; right: 6px; width: 54px; height: 54px; border-radius: 16px;
+.kl-moon { text-decoration: none !important; cursor: pointer; position: absolute; top: 4px; right: 6px; width: 54px; height: 54px; border-radius: 16px;
            display: flex; align-items: center; justify-content: center; z-index: 2;
            background: rgba(255, 255, 255, .6);
            box-shadow: inset 0 1px 0 #fff, 0 10px 22px rgba(37, 99, 235, .12); }
@@ -464,6 +464,51 @@ img.kp-avatar { display: block; }
 </style>
 """
 
+DARK_CSS = """
+<style>
+.stApp { background: radial-gradient(circle at 20% 10%, #1E293B 0%, #0B1220 70%) !important; }
+.block-container { background: linear-gradient(180deg, #0F172A 0%, #111C33 100%) !important; }
+@media (min-width: 640px) {
+    .block-container { box-shadow: 0 0 0 10px #000000, 0 30px 70px rgba(0, 0, 0, .6) !important; }
+    .block-container::before { background: #000000 !important; }
+}
+/* textes */
+.stApp p, .stApp label, .stApp li, .stApp h1, .stApp h2, .stApp h3, .stApp span { color: #E2E8F0; }
+[data-testid="stCaptionContainer"] p, .stApp small { color: #94A3B8 !important; }
+.kura-title, .kura-name, .kura-section, .kp-name, .kn-title, .kn-head, .ka-head b, .kl-title,
+.kura-tile b, .kura-tip b, .kp-row, .kl-remember, .kl-a { color: #F1F5F9 !important; }
+.kura-greeting, .kura-meta, .kp-sub, .kp-row span, .kn-text, .kura-tile small, .kl-sub,
+.kl-tagline, .kl-divider, .kn-empty, .kp-empty { color: #94A3B8 !important; }
+.kl-divider::before, .kl-divider::after { background: #334155 !important; }
+/* cartes */
+.kura-card, .kura-tile, .kura-tip, .kp-card, .kura-row, .stCheckbox, [data-testid="stExpander"],
+.st-key-nav { background: #1E293B !important; box-shadow: 0 6px 18px rgba(0, 0, 0, .35) !important; }
+.kp-row, .kn-empty, .kp-empty, .kn-item, .ka-b.ai { background: #172036 !important; color: #E2E8F0 !important; }
+.kn-item.warn { background: #3A2E0C !important; }
+.kn-item.danger { background: #3B1414 !important; }
+.kura-avatar, .kura-tile-icon { background: #1E3A8A !important; }
+[data-testid="stPopoverBody"] { background: #0F172A !important; border: 1px solid #1E293B !important; }
+/* boutons clairs -> sombres */
+.st-key-services .stButton button, .st-key-back .stButton button { background: #1E293B !important; }
+.st-key-back .stButton button p { color: #F1F5F9 !important; }
+.st-key-bellbtn button { background-color: #1E293B !important; }
+.st-key-nav .stButton button [data-testid="stIconMaterial"] { color: #94A3B8; }
+/* champs */
+.stTextInput [data-baseweb="input"], .stNumberInput [data-baseweb="input"],
+.stDateInput [data-baseweb="input"], .stTimeInput [data-baseweb="input"],
+[data-baseweb="textarea"], [data-baseweb="select"] > div, [data-testid="stFileUploaderDropzone"] {
+    background: #1E293B !important; border-color: #334155 !important; box-shadow: none !important; }
+.stApp input, .stApp textarea { color: #F1F5F9 !important; -webkit-text-fill-color: #F1F5F9; }
+.stApp input::placeholder, .stApp textarea::placeholder { color: #64748B !important; }
+/* login */
+.kl-field, .kl-logo, .kl-moon, .kl-social button {
+    background: rgba(30, 41, 59, .85) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 10px 24px rgba(0, 0, 0, .35) !important; }
+.kl-field input { color: #F1F5F9 !important; }
+.kl-blob { opacity: .12; }
+</style>
+"""
+
 SERVICES = [
     ("🚗", "Rides", "Ask a friend"),
     ("💊", "Medication", "Daily reminders"),
@@ -480,8 +525,8 @@ TIPS = [
 ]
 
 
-def load_css():
-    st.markdown(CSS, unsafe_allow_html=True)
+def load_css(dark=False):
+    st.markdown(CSS + (DARK_CSS if dark else ""), unsafe_allow_html=True)
 
 
 def _greeting():
@@ -522,6 +567,9 @@ _ARROW_SVG = ('<svg width="22" height="22" viewBox="0 0 24 24" fill="none" strok
               'stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>')
 _MOON_SVG = ('<svg width="24" height="24" viewBox="0 0 24 24"><path fill="#0B1437" '
              'd="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>')
+_SUN_SVG = ('<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" '
+            'stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/>'
+            '<path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>')
 _LOGO_SVG = ('<svg class="kl-heart" width="150" height="150" viewBox="0 0 120 120"><defs>'
              '<radialGradient id="kld" cx="35%" cy="30%" r="80%">'
              '<stop offset="0" stop-color="#F0F7FF" stop-opacity=".95"/>'
@@ -568,17 +616,19 @@ def _logo_html():
     return _LOGO_SVG
 
 
-def login_screen():
+def login_screen(dark=False):
     """Écran de connexion. Le bouton Login recharge la page avec ?user=..."""
     st.markdown(
         '<div class="kl-wrap">'
         '<div class="kl-blob kl-b1"></div><div class="kl-blob kl-b2"></div>'
         '<div class="kl-blob kl-b3"></div><div class="kl-blob kl-b4"></div>'
-        f'<div class="kl-moon">{_MOON_SVG}</div>'
+        + (f'<a class="kl-moon" href="?theme=light" target="_self" title="Light mode">{_SUN_SVG}</a>' if dark
+           else f'<a class="kl-moon" href="?theme=dark" target="_self" title="Dark mode">{_MOON_SVG}</a>') +
         f'<div class="kl-logo">{_logo_html()}</div>'
         '<div class="kl-title">Welcome Back</div>'
         '<div class="kl-sub">Sign in to continue</div>'
         '<form class="kl-form" method="get" action="" target="_self">'
+        f'<input type="hidden" name="theme" value="{"dark" if dark else "light"}">'
         f'<label class="kl-field">{_USER_SVG}'
         '<input name="user" type="text" placeholder="Username or Email" autocomplete="username" required></label>'
         f'<label class="kl-field">{_LOCK_SVG}'

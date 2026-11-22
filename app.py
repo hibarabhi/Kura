@@ -28,7 +28,19 @@ from meds import (
 )
 
 st.set_page_config(page_title="Kura", page_icon="💙")
-load_css()
+
+# ================= MODE SOMBRE =================
+# Le choix est gardé dans l'adresse (?theme=dark) pour survivre au login.
+if "theme" in st.query_params:
+    st.session_state["dark"] = st.query_params["theme"] == "dark"
+dark = st.session_state.get("dark", False)
+load_css(dark)
+
+
+def set_theme():
+    st.session_state["dark"] = st.session_state["dark_toggle"]
+    st.query_params["theme"] = "dark" if st.session_state["dark"] else "light"
+
 
 # ================= PAGE PROCHE AIDANT =================
 if "linked_code" in st.session_state:
@@ -40,12 +52,12 @@ if "profile" not in st.session_state:
     # Le formulaire HTML renvoie le nom dans l'adresse : ?user=Sam
     user = st.query_params.get("user", "").strip()
     if user:
-        st.query_params.clear()
+        del st.query_params["user"]   # on garde ?theme=...
         st.session_state["profile"] = create_demo_profile(user.split("@")[0])
         st.session_state["page"] = "home"
         st.rerun()
 
-    login_screen()
+    login_screen(dark)
     with st.expander("🤝  I'm a caregiver"):
         show_link_form()
     st.stop()
@@ -188,6 +200,7 @@ elif page == "book":
 # ================= PROFILE =================
 elif page == "profile":
     show_profile(profile)
+    st.toggle("🌙  Dark mode", value=dark, key="dark_toggle", on_change=set_theme)
     section("Caregivers")
     show_share_code(profile)
     if st.button("Log out"):
