@@ -94,10 +94,10 @@ Kura/
 
 | Name | Role |
 |---|---|
-| [Arwa] | Frontend: main app, design |
-| [Hiba] | Frontend: appointment views, booking |
-| [Ikram] | Backend: scheduling, caregiver link, chatbot |
-| [Farah] | Backend: patient data, calendar |
+| Arwa Azriga | Frontend: main app, design |
+| Hiba Rabhi | Frontend: appointment views, booking |
+| Ikram El khattab| Backend: scheduling, caregiver link, chatbot |
+| Farah Daami | Backend: patient data, calendar |
 
 ## What's next
 
