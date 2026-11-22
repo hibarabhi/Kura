@@ -4,7 +4,7 @@
 
 Built in 30 hours at **[Hackathon name]** by a team of four.
 
-🔗 **Live demo:** [your-app.streamlit.app](https://kura-health.streamlit.app/)
+🔗 **Live demo:** (https://kura-health.streamlit.app/)
 
 ---
 
