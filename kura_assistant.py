@@ -17,7 +17,7 @@ import streamlit.components.v1 as components
 from clinic_chat import RULES, get_reply as keyword_reply
 from schedule import get_todays_reminders, get_upcoming_appointments
 
-DEBUG = True   # affiche la raison des erreurs (mettre False pour la démo)
+DEBUG = False  # mettre True pour voir pourquoi l'IA ne répond pas
 GROQ_STT_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 GEMINI_MODELS = ["gemini-3.8-flash", "gemini-3.8-flash-lite", "gemini-3.1-flash-lite", "gemini-3-flash"]
