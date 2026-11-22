@@ -2,7 +2,7 @@
 
 **Care · Cure · Connect.** Kura is a patient companion app that makes it easier to get to appointments, stay on top of medications, and keep loved ones in the loop.
 
-Built in 30 hours at **[Hackathon name]** by a team of four.
+Built in 30 hours at **CodeJam16** by a team of four.
 
 🔗 **Live demo:** (https://kura-health.streamlit.app/)
 
@@ -109,7 +109,7 @@ Kura/
 
 ## Credits
 
-- App logo generated with AI by our team
+- App logo found on Pinterest by our team
 - Fonts: [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans) and [Poppins](https://fonts.google.com/specimen/Poppins) (Google Fonts, Open Font License)
 - AI assistant powered by the [Google Gemini API](https://ai.google.dev)
 
