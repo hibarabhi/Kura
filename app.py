@@ -20,6 +20,8 @@ from caregiver import (
 )
 from calendar_view import show_week_calendar
 from kura_assistant import show_assistant, reset_assistant
+from profile_view import show_profile, avatar_button_css
+from notifications import show_bell
 from meds import (
     show_add_medication, show_medication_list,
     show_prescriptions, show_prescription_list,
@@ -88,6 +90,16 @@ page = st.session_state["page"]
 
 # ================= HOME =================
 if page == "home":
+    # barre du haut : photo de profil (-> profil) + cloche des notifications
+    avatar_button_css(profile)
+    with st.container(key="topbar"):
+        col_avatar, col_bell = st.columns(2)
+        with col_avatar:
+            with st.container(key="avatarbtn"):
+                st.button(profile["name"].strip()[:1].upper() or "?", key="avatar_btn",
+                          on_click=go, args=("profile",), help="My profile")
+        with col_bell:
+            show_bell(profile, go)
     home_header(profile["name"])
     search = st.text_input(
         "Search",
@@ -175,8 +187,8 @@ elif page == "book":
 
 # ================= PROFILE =================
 elif page == "profile":
-    section("Profile")
-    st.write(f'Name: {profile["name"]}')
+    show_profile(profile)
+    section("Caregivers")
     show_share_code(profile)
     if st.button("Log out"):
         close_patient_code(st.session_state.get("patient_code"))

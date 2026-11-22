@@ -410,6 +410,57 @@ header[data-testid="stHeader"] { background: transparent; }
 .ka-b { padding: 10px 12px; border-radius: 16px; font-size: .9rem; line-height: 1.35; max-width: 85%; }
 .ka-b.ai { align-self: flex-start; background: #EEF4FF; color: #0F172A; border-bottom-left-radius: 4px; }
 .ka-b.me { align-self: flex-end; background: #2563EB; color: #fff; border-bottom-right-radius: 4px; }
+
+/* ================= barre du haut (photo de profil cliquable + cloche) ================= */
+.st-key-topbar [data-testid="stHorizontalBlock"] { flex-wrap: nowrap !important; align-items: center !important; }
+.st-key-topbar [data-testid="stColumn"] { min-width: 0 !important; }
+.st-key-avatarbtn .stButton button {
+    width: 46px !important; height: 46px !important; min-height: 0 !important; padding: 0 !important;
+    border-radius: 50% !important; border: 2px solid #FFFFFF !important;
+    background: linear-gradient(135deg, #3B82F6, #1D4ED8) !important;
+    box-shadow: 0 6px 14px rgba(37, 99, 235, .35) !important; }
+.st-key-avatarbtn .stButton button p { color: #FFFFFF !important; font-weight: 700; font-size: 1.05rem; }
+.st-key-avatarbtn .stButton button:hover { transform: scale(1.06); }
+.kura-bell.right { margin-left: auto; }
+
+/* ================= page profil ================= */
+.kp-card { background: #FFFFFF; border-radius: 24px; padding: 24px 18px 18px; text-align: center;
+           margin: 8px 0 14px; box-shadow: 0 6px 20px rgba(15, 23, 42, .07); }
+.kp-avatar { width: 100px; height: 100px; border-radius: 50%; margin: 0 auto 12px; object-fit: cover;
+             display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 800;
+             color: #FFFFFF; background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+             border: 4px solid #FFFFFF; box-shadow: 0 10px 26px rgba(37, 99, 235, .30); }
+img.kp-avatar { display: block; }
+.kp-name { font-size: 1.45rem; font-weight: 800; color: #0F172A; }
+.kp-sub { color: #64748B; font-size: .85rem; margin-bottom: 14px; }
+.kp-rows { display: flex; flex-direction: column; gap: 8px; text-align: left; }
+.kp-row { display: flex; gap: 12px; align-items: center; background: #F5F8FF; border-radius: 14px;
+          padding: 10px 14px; font-size: .92rem; color: #0F172A; }
+.kp-row span { display: block; color: #64748B; font-size: .72rem; }
+.kp-empty { color: #64748B; font-size: .9rem; background: #F5F8FF; border-radius: 14px; padding: 14px; }
+
+/* ================= cloche des notifications ================= */
+.st-key-bellbtn { position: relative; margin-left: auto; width: 46px !important; }
+.st-key-bellbtn button {
+    width: 46px !important; height: 46px !important; min-height: 0 !important; padding: 0 !important;
+    border: none !important; border-radius: 50% !important; font-size: 0 !important;
+    background: #FFFFFF url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563EB' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9'/%3E%3Cpath d='M10.3 21a1.94 1.94 0 0 0 3.4 0'/%3E%3C/svg%3E") center / 22px no-repeat !important;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, .10) !important; }
+.st-key-bellbtn button > * { visibility: hidden !important; }
+.st-key-bellbtn button:hover { transform: scale(1.06); }
+.st-key-bellbtn::after { content: none; position: absolute; top: -3px; right: -3px; z-index: 2;
+    min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; border: 2px solid #FFFFFF;
+    background: #EF4444; color: #FFFFFF; font: 700 11px/16px sans-serif; text-align: center;
+    pointer-events: none; }
+.kn-head { font-weight: 800; color: #0F172A; font-size: 1.05rem; margin-bottom: 10px; }
+.kn-empty { color: #64748B; background: #F5F8FF; border-radius: 14px; padding: 14px; text-align: center; }
+.kn-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; margin: 6px 0 4px;
+           border-radius: 16px; background: #F5F8FF; }
+.kn-item.warn { background: #FEF3C7; }
+.kn-item.danger { background: #FEE2E2; }
+.kn-icon { font-size: 1.25rem; line-height: 1.2; }
+.kn-title { font-weight: 700; font-size: .9rem; color: #0F172A; }
+.kn-text { font-size: .8rem; color: #475569; }
 </style>
 """
 
@@ -558,8 +609,6 @@ def home_header(name):
     initial = html.escape(name.strip()[:1].upper())
     name = html.escape(name)
     st.markdown(
-        f'<div class="kura-top"><div class="kura-initial">{initial}</div>'
-        f'<div class="kura-bell">🔔<span class="kura-dot"></span></div></div>'
         f'<div class="kura-hello"><div>'
         f'<p class="kura-greeting">{_greeting()}, {name} 👋</p>'
         f'<p class="kura-title">Take care of<br>your <span>health.</span></p>'
