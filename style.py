@@ -382,6 +382,34 @@ header[data-testid="stHeader"] { background: transparent; }
 .kl-corner { position: absolute; right: 14px; bottom: 34px; z-index: 1; text-align: left;
              font-size: .62rem; letter-spacing: .28em; line-height: 2; color: #334155; }
 .kl-corner span { display: block; width: 22px; height: 2px; background: #334155; margin-top: 6px; }
+
+/* ================= ASSISTANT IA : bulle flottante ================= */
+.st-key-aifab { position: fixed !important; z-index: 1000; bottom: 118px;
+                right: max(18px, calc(50% - 192px)); width: 62px !important; }
+.st-key-aifab button {
+    width: 62px !important; height: 62px !important; min-height: 0 !important; padding: 0 !important;
+    border: none !important; border-radius: 50% !important; font-size: 0 !important;
+    background: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4'/%3E%3C/svg%3E") center / 28px no-repeat,
+                linear-gradient(135deg, #60A5FA, #1D4ED8) !important;
+    animation: ka-pulse 2.4s ease-out infinite; }
+.st-key-aifab button > * { visibility: hidden !important; }
+@keyframes ka-pulse {
+    0%   { box-shadow: 0 10px 24px rgba(37, 99, 235, .45), 0 0 0 0 rgba(59, 130, 246, .45); }
+    70%  { box-shadow: 0 10px 24px rgba(37, 99, 235, .45), 0 0 0 16px rgba(59, 130, 246, 0); }
+    100% { box-shadow: 0 10px 24px rgba(37, 99, 235, .45), 0 0 0 0 rgba(59, 130, 246, 0); } }
+[data-testid="stPopoverBody"] { width: 340px !important; max-width: calc(100vw - 32px) !important;
+                                border-radius: 24px !important; padding: 16px !important;
+                                box-shadow: 0 24px 50px rgba(15, 23, 42, .25) !important; }
+.ka-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.ka-head b { display: block; color: #0F172A; }
+.ka-head small { color: #64748B; font-size: .75rem; }
+.ka-dot { width: 38px; height: 38px; border-radius: 50%; color: #fff; font-size: 18px;
+          display: flex; align-items: center; justify-content: center;
+          background: linear-gradient(135deg, #60A5FA, #1D4ED8); }
+.ka-msgs { max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+.ka-b { padding: 10px 12px; border-radius: 16px; font-size: .9rem; line-height: 1.35; max-width: 85%; }
+.ka-b.ai { align-self: flex-start; background: #EEF4FF; color: #0F172A; border-bottom-left-radius: 4px; }
+.ka-b.me { align-self: flex-end; background: #2563EB; color: #fff; border-bottom-right-radius: 4px; }
 </style>
 """
 
@@ -392,15 +420,12 @@ SERVICES = [
     ("💬", "Messages", "Your clinic"),
 ]
 
-
 TIPS = [
-    "Small steps still count.",
-    "You can take today one thing at a time.",
-    "Rest is part of taking care of yourself.",
-    "You deserve support, even when you don't know what to ask for.",
-    "It's okay to go at your own pace.",
-    "A hard day doesn't erase the progress you've made.",
-    "You don't have to do everything today.",
+    "Write down your questions before your appointment.",
+    "Bring your medication list to every visit.",
+    "Small steps count. You've got this 💙",
+    "Ask someone you trust to come with you if you feel nervous.",
+    "Keep your clinic's phone number somewhere easy to find.",
 ]
 
 
@@ -587,7 +612,7 @@ def section(title):
 def tip_card():
     tip = TIPS[date.today().toordinal() % len(TIPS)]
     st.markdown(
-        f'<div class="kura-tip"><div><small>Daily encouragement</small><b>{tip}</b></div>'
+        f'<div class="kura-tip"><div><small>Daily tip</small><b>{tip}</b></div>'
         f'<div class="kura-tip-icon">💙</div></div>',
         unsafe_allow_html=True,
     )

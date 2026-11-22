@@ -19,8 +19,7 @@ from caregiver import (
     close_patient_code,
 )
 from calendar_view import show_week_calendar
-from clinic_chat import get_reply
-from voice_assistant import show_voice_assistant, reset_voice_assistant
+from kura_assistant import show_assistant, reset_assistant
 from meds import (
     show_add_medication, show_medication_list,
     show_prescriptions, show_prescription_list,
@@ -69,20 +68,22 @@ def back_button():
 
 # (icône, nom, page ouverte au clic)
 SERVICES = [
-    ("🚗", "Rides", "rides"),
-    ("💊", "Medication", "meds"),
-    ("🤝", "Caregiver", "profile"),
-    ("💬", "Messages", "chat"),
+    (":material/directions_car:", "Rides", "rides"),
+    (":material/medication:", "Meds", "meds"),
+    (":material/diversity_1:", "Caregiver", "profile"),
+    (":material/calendar_month:", "Book", "book"),
 ]
 
 # (page, icône, nom) pour la barre du bas
 NAV = [
-    ("home", "🏠", "Home"),
-    ("book", "📅", "Book"),
-    ("chat", "💬", "Chat"),
-    ("profile", "👤", "Profile"),
+    ("home", ":material/home:", "Home"),
+    ("book", ":material/stethoscope:", "Book"),
+    ("meds", ":material/medication:", "Meds"),
+    ("profile", ":material/person:", "Profile"),
 ]
 
+if st.session_state["page"] not in {"home", "rides", "meds", "book", "profile"}:
+    st.session_state["page"] = "home"
 page = st.session_state["page"]
 
 # ================= HOME =================
@@ -108,7 +109,7 @@ if page == "home":
         cols = st.columns(4)
         for col, (icon, label, target) in zip(cols, SERVICES):
             with col:
-                st.button(f"{icon}\n\n{label}", key=f"svc_{label}", on_click=go, args=(target,))
+                st.button(label, icon=icon, key=f"svc_{label}", on_click=go, args=(target,))
 
     section("Today")
     todays = get_todays_reminders(profile["reminders"])
@@ -172,24 +173,6 @@ elif page == "book":
     upcoming = get_upcoming_appointments(profile["appointments"])
     show_week_calendar(upcoming)
 
-# ================= CHAT =================
-elif page == "chat":
-    section("Contact your clinic")
-    if "chat" not in st.session_state:
-        st.session_state.chat = [
-            ("assistant", "Hi! This is Demo Health Clinic. How can we help?")
-        ]
-    for role, text in st.session_state.chat:
-        avatar = "🏥" if role == "assistant" else "🙂"
-        st.chat_message(role, avatar=avatar).write(text)
-
-    with st.container():          # garde la zone de texte dans la page, pas collée en bas
-        msg = st.chat_input("Type a message...")
-    if msg:
-        st.session_state.chat.append(("user", msg))
-        st.session_state.chat.append(("assistant", get_reply(msg, profile)))
-        st.rerun()
-
 # ================= PROFILE =================
 elif page == "profile":
     section("Profile")
@@ -198,24 +181,24 @@ elif page == "profile":
     if st.button("Log out"):
         close_patient_code(st.session_state.get("patient_code"))
         st.session_state.pop("patient_code", None)
-        reset_voice_assistant()
+        reset_assistant()
         st.session_state["page"] = "home"
         del st.session_state["profile"]
         st.rerun()
 
 # ================= BARRE DU BAS =================
 with st.container(key="nav"):
-    cols = st.columns(4)
+    cols = st.columns(len(NAV))
     for col, (target, icon, label) in zip(cols, NAV):
         with col:
             st.button(
-                f"{icon}\n\n{label}",
+                label,
+                icon=icon,
                 key=f"nav_{target}",
                 on_click=go,
                 args=(target,),
                 type="primary" if page == target else "secondary",
             )
 
-# ================= ASSISTANT IA (bouton flottant + voix) =================
-show_voice_assistant(profile)
-
+# ================= ASSISTANT IA (bulle flottante : micro + texte) =================
+show_assistant(profile)
