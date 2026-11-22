@@ -357,12 +357,15 @@ SERVICES = [
     ("💬", "Messages", "Your clinic"),
 ]
 
+
 TIPS = [
-    "Write down your questions before your appointment.",
-    "Bring your medication list to every visit.",
-    "Small steps count. You've got this 💙",
-    "Ask someone you trust to come with you if you feel nervous.",
-    "Keep your clinic's phone number somewhere easy to find.",
+    "Small steps still count.",
+    "You can take today one thing at a time.",
+    "Rest is part of taking care of yourself.",
+    "You deserve support, even when you don't know what to ask for.",
+    "It's okay to go at your own pace.",
+    "A hard day doesn't erase the progress you've made.",
+    "You don't have to do everything today.",
 ]
 
 
@@ -549,7 +552,7 @@ def section(title):
 def tip_card():
     tip = TIPS[date.today().toordinal() % len(TIPS)]
     st.markdown(
-        f'<div class="kura-tip"><div><small>Daily tip</small><b>{tip}</b></div>'
+        f'<div class="kura-tip"><div><small>Daily encouragement</small><b>{tip}</b></div>'
         f'<div class="kura-tip-icon">💙</div></div>',
         unsafe_allow_html=True,
     )
